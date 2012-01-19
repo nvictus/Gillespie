@@ -63,14 +63,20 @@ rxnCount = 1;
 
 %% MAIN LOOP
 while T(rxnCount) <= tspan(2)        
-    % Step 1: calculate propensities and a_0
+    % Calculate reaction propensities
     a  = propensity_fcn(X(rxnCount,:), rate_params);
+    
+    % Compute tau and mu using random variates
     a0 = sum(a);
-
-    % Step 2: calculate tau and mu using random variates
     r = rand(1,2);
     tau = (1/a0)*log(1/r(1));
     mu  = find((cumsum(a) >= r(2)*a0),1,'first');
+    % alternatively...
+    %mu=1; s=a(1); r0=r(2)*a0;
+    %while s < r0
+    %   mu = mu + 1;
+    %   s = s + a(mu);
+    %end
 
     % Update time and carry out reaction mu
     rxnCount = rxnCount + 1; 

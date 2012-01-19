@@ -65,8 +65,8 @@ function varargout = ssa( stoich_matrix, propensity_fcn, tspan, x0, rate_params,
 %   See also SSA.directMethod, SSA.firstReactionMethod, SSAPLOT, SSAEVENT
 %
 %   Author:     Nezar Abdennur
-%   Created:    2012/01/07
 %   Copyright:  (c) Nezar Abdennur 2012
+%   Revision:   12.01.19
 
 % If no input, show usage
 if nargin == 0

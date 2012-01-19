@@ -1,7 +1,7 @@
 % SSA
 %
 % Author:     Nezar Abdennur
-% Created:    2012/01/07
+% Created:    2012-01-07
 % Copyright:  (c) Nezar Abdennur 2012
 % Version:    1.0.0
 %
