@@ -1,8 +1,5 @@
 function varargout = ssa( stoich_matrix, propensity_fcn, tspan, x0, rate_params, varargin )
 %SSA Runs a chemical kinetics simulation using the Gillespie Stochastic Simulation Algorithm
-%   Based on: Gillespie, D.T. (1977) Exact Stochastic Simulation of Coupled
-%   Chemical Reactions. J Phys Chem, 81:25, 2340-2361.
-%
 %   Usage:
 %       [t, x] = ssa(stoich_matrix, prop_fcn, tspan, x0, rate_params=[])
 %       [t, x] = ssa(stoich_matrix, prop_fcn, tspan, x0, rate_params=[], options)
@@ -47,12 +44,13 @@ function varargout = ssa( stoich_matrix, propensity_fcn, tspan, x0, rate_params,
 %                       ({'DIRECT'} | 'FIRST-REACTION')
 %
 %       OutputFcn:      Accepts an output function similar to the MATLAB 
-%                       ode library. Use SSAPLOT to visualize the
-%                       simulation trajectory in real time.
+%                       ode library. Use SSAPLOT or SSAPHAS2 to visualize
+%                       the simulation trajectory in real time or
+%                       SSAPROGBAR to display a graphical progress bar.
 %                       (Default=none)
 %
-%       OutputSel:      Determines which species to display when SSAPLOT
-%                       is used as the output function.
+%       OutputSel:      Determines which species to display when SSAPLOT or
+%                       SSAPHAS2 is used as the output function.
 %                       (Default=1:Nspecies)
 %
 %       EventFcn:       Accepts an event function similar to the MATLAB ode
@@ -64,7 +62,7 @@ function varargout = ssa( stoich_matrix, propensity_fcn, tspan, x0, rate_params,
 %       Validate:       Whether to validate required input arguments.
 %                       (Default=true)
 %
-%   See also SSAPLOT, SSAEVENT, SSA.directMethod, SSA.firstReactionMethod
+%   See also SSA.directMethod, SSA.firstReactionMethod, SSAPLOT, SSAEVENT
 %
 %   Author:     Nezar Abdennur
 %   Created:    2012/01/07
@@ -96,7 +94,7 @@ if ~isempty(varargin)
     end
 end
 
-% Parse options args (name-value pairs) and store results in a struct
+% A struct to store optional input args
 opt_names = { 'Method',...
               'OutputFcn',...
               'OutputSel',...
@@ -105,13 +103,15 @@ opt_names = { 'Method',...
               'Validate' };
 opt_init = [opt_names; {[], [], [], [], [], []}];
 options = struct(opt_init{:});
-options.Validate = true;
+options.Validate = true; % validate input by default
+
+% Parse optional input args (name-value pairs)
 for i = 1:2:length(varargin)
     opt_name = validatestring(varargin{i}, opt_names);
     options.(opt_name) = varargin{i+1};
 end
 
-% Validate input
+% Validate input model
 if options.Validate
     assert(isnumeric(stoich_matrix) && ~isempty(stoich_matrix),...
            'SSA:InputTypeError',...
@@ -150,7 +150,7 @@ if options.Validate
            'Size of vector returned by propensity_fcn is inconsistent with the stoichiometry matrix.'); 
 end
 
-% Set default and user-defined options
+% Set user-defined options / default values
 if isempty(options.MaxNumEvents)
     max_num_events = 1000000;
 elseif options.MaxNumEvents > 0
@@ -178,35 +178,30 @@ else
     end
 end
 
-special_fcns = {'ProgressBar','ssaplot'};
+special_fcns = {'ssaprogbar','ssaplot','ssaphas2'};
 if isempty(options.OutputFcn) && isempty(options.EventFcn)
     output_fcn = [];
+    
 elseif ~isempty(options.EventFcn)
     if ischar(options.EventFcn)
         options.EventFcn = str2func(options.EventFcn);
-    elseif ~isa(options.EventFcn, 'function_handle')
+    end
+    if isa(options.EventFcn, 'function_handle')
+        ssaevent('init', tspan, x0(:), @options.EventFcn);
+        output_fcn = @(ti,xi) ssaevent('update', ti,xi, @options.EventFcn);
+        c = onCleanup( @() ssaevent('done') );   
+    else
         error('SSA:OptionsError',...
               'EventFcn option must be a valid function handle.'); 
     end
-    ssaevent('init', tspan, x0(:), @options.EventFcn);
-    output_fcn = @(ti,xi) ssaevent('update', ti,xi, @options.EventFcn);
-    c = onCleanup( @() ssaevent('done') );    
+    
 elseif ~isempty(options.OutputFcn)
     if ischar(options.OutputFcn)
-        fstr = validatestring(options.OutputFcn, special_fcns);
-        switch fstr
-            case 'ProgressBar'
-                ssaprogbar('init', tspan);
-                output_fcn = @(ti,xi) ssaprogbar('update',ti,xi);
-                c = onCleanup( @() ssaprogbar('done') );
-            case 'ssaplot'
-                ssaplot('init', tspan, x0(:), options.OutputSel);
-                output_fcn = @(ti,xi) ssaplot('update',ti,xi);
-                c = onCleanup( @() ssaplot('done') );
-            otherwise
-                output_fcn = str2func(options.OutputFcn);
-        end 
-    elseif isa(options.OutputFcn, 'function_handle')
+        try options.OutputFcn = validatestring(options.OutputFcn, special_fcns);
+        catch exc; end
+        options.OutputFcn = str2func(options.OutputFcn);
+    end      
+    if isa(options.OutputFcn, 'function_handle')
         if isequal(options.OutputFcn, @ssaplot)
             ssaplot('init', tspan, x0(:), options.OutputSel);
             output_fcn = @(ti,xi) ssaplot('update',ti,xi);
@@ -215,6 +210,10 @@ elseif ~isempty(options.OutputFcn)
             ssaphas2('init', tspan, x0(:), options.OutputSel);
             output_fcn = @(ti,xi) ssaphas2('update',ti,xi);
             c = onCleanup( @() ssaphas2('done') );
+        elseif isequal( options.OutputFcn, @ssaprogbar )
+            ssaprogbar('init', tspan);
+            output_fcn = @(ti,xi) ssaprogbar('update',ti,xi);
+            c = onCleanup( @() ssaprogbar('done') );
         else
             output_fcn = options.OutputFcn;
         end
@@ -223,7 +222,6 @@ elseif ~isempty(options.OutputFcn)
                'OutputFcn option must be a valid function handle.');
     end
 end
-
       
 % Run simulation algorithm
 switch update_method

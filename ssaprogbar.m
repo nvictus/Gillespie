@@ -1,6 +1,6 @@
 function status = ssaprogbar( flag, ti, ~ )
 % SSAPROGBAR Used to display a progress bar window during an ssa simulation
-%   Used by the ssa function when 'ProgressBar' is passed to ssa as the
+%   Used by the ssa function when ssaprogbar is passed to ssa as the
 %   'OutputFcn' property. Pushing the stop button terminates the simulation
 %   and ssa returns the time course data it collected before the button was
 %   pushed.
