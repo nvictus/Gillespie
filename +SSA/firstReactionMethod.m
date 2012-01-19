@@ -10,12 +10,38 @@ function [ t, x ] = firstReactionMethod( stoich_matrix, propensity_fcn, tspan, x
 %       [t, x] = SSA.firstReactionMethod( stoich_matrix, propensity_fcn, tspan, x0, ...
 %                                         rate_params, output_fcn )
 %
-%   Author:     Nezar Abdennur
-%   Created:    2012-22-12
-%   Copyright:  (c) Nezar Abdennur 2012
-%   Version:    1.0.0
+%   Returns:
+%       t:              time vector          (Nreaction_events x 1)
+%       x:              species amounts      (Nreaction_events x Nspecies)    
 %
-%   See also SSA, SSA.DIRECTMETHOD
+%   Required:
+%       tspan:          Initial and final times, [t_initial, t_final].
+%       x0:             Initial species values, [S1_0, S2_0, ... ].
+%       stoich_matrix:  Matrix of stoichiometries (Nreactions x Nspecies).
+%                       Each row gives the stoichiometry of a reaction.
+%       prop_fcn:       Function handle to function that calculates
+%                       reaction propensities.
+%                       Target function should be of the form
+%                           ac = f( xc, rate_params ),
+%                       where xc is the current state [S1, S2, ...], and
+%                       rate_params is the user-defined rate parameters.
+%                       The function should return column vector ac of 
+%                       propensities (Nreactions x 1) in the same order as
+%                       the reactions given in stoich_matrix.
+%
+%	Optional:
+%		output_fcn:	    Handle to user-defined function with the form
+%							status = f( tc, xc )
+%						The output_fcn is called at each time step in the 
+%						simulation and is passed the current time and state.
+%						It can be used to locate events or monitor progress. 
+%						If it returns 0, the simulation terminates.
+%
+%   Author:     Nezar Abdennur
+%   Copyright:  (c) Nezar Abdennur 2012
+%   Revision:   12.01.19
+%
+%   See also SSA.DIRECTMETHOD
 
 if ~exist('MAX_OUTPUT_LENGTH','var')
     MAX_OUTPUT_LENGTH = 1000000;
