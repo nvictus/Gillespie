@@ -69,7 +69,7 @@ classdef SSARunner < handle
         end   
         
         function plot_events(self)
-            if ishghandle(self.hfigure)
+            if ishghandle(self.hfigure) && ~isempty(self.output.ie)
                 hold on;
                 num_ie = max(self.output.ie);
                 c = jet(num_ie);
