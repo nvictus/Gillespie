@@ -60,7 +60,7 @@ classdef Test_RandomModel < SSARunner
             %        
             %
             % * possible to add an extra product to each rxn (zero-order
-            % source)
+            % source)?
         end
     end
     

@@ -1,46 +1,65 @@
-%%
-fprintf('Testing two-state model...\n');
+%% Create test object to run simulations
 t = Test_2StateModel();
 
-t.init();
-fprintf('    1) no options...');
-t.run_ssa();
-fprintf('Y\n');
-
 %%
+fprintf('Testing two-state model, direct method...\n');
 t.init();
-t.options.Method = 'FIRST';
-fprintf('    2) Method = ''FIRST''...');
 t.run_ssa();
-t.plot_output('Test 2'); 
+t.plot_output('Direct');
 pause;
-fprintf('Y\n');
 
 %%
+clf;
+fprintf('Testing two-state model, first-reaction method...\n');
 t.init();
-t.param.kR = 0.01;
-t.param.gR = 1;
-fprintf('    3) Change rate params...');
 t.run_ssa();
-t.plot_output('Test 3');
+t.plot_output('First-Reaction'); 
 pause;
-fprintf('Y\n');
 
 %%
+clf;
+fprintf('Change parameters...\n');
+t.init();
+t.param.kR = 1;
+t.param.gR = 0.05;
+t.run_ssa();
+t.plot_output();
+pause;
+
+%%
+clf;
+fprintf('Test ssaplot -- real-time plot...\n');
 t.init();
 t.options.OutputFcn = @ssaplot;
-fprintf('    4) OutputFcn = ''ssaplot''...');
 t.run_ssa();
-t.plot_output('Test 4');
+t.plot_output();
 pause;
-fprintf('Y\n');
 
 %%
+clf;
+fprintf('Test ssaphas2 -- real-time phase diagram...\n');
 t.init();
-t.options.OutputFcn = 'ProgressBar';
-fprintf('    5) OutputFcn = ''ProgressBar''...');
+t.options.OutputFcn = @ssaphas2;
 t.run_ssa();
-t.plot_output('Test 5');
-pause;   
-fprintf('Y\n');
+t.plot_output();
+pause;
+
+%%
+clf;
+fprintf('Test ssaprogbar -- slow-ass waitbar...\n');
+t.init();
+t.options.OutputFcn = @ssaprogbar;
+t.run_ssa();
+t.plot_output();
+pause;
+
+%%
+clf;
+fprintf('Test using an event function -- see my_event.m...\n');
+t.init();
+t.options.EventFcn = @my_event;
+t.run_ssa();
+t.plot_output('With events!');
+t.plot_events();
+pause;
 
