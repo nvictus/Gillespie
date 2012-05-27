@@ -84,6 +84,7 @@ if nargin == 4
     rate_params = []; %no rate parameters provided
 end
 
+% Optional args accepted as a struct or name-value pairs
 if ~isempty(varargin)
     if isstruct(varargin{1})
         varargin = reshape([fieldnames(varargin{1}),...
@@ -210,7 +211,7 @@ elseif ~isempty(options.OutputFcn)
             ssaphas2('init', tspan, x0(:), options.OutputSel);
             output_fcn = @(ti,xi) ssaphas2('update',ti,xi);
             c = onCleanup( @() ssaphas2('done') );
-        elseif isequal( options.OutputFcn, @ssaprogbar )
+        elseif isequal(options.OutputFcn, @ssaprogbar)
             ssaprogbar('init', tspan);
             output_fcn = @(ti,xi) ssaprogbar('update',ti,xi);
             c = onCleanup( @() ssaprogbar('done') );
@@ -226,11 +227,11 @@ end
 % Run simulation algorithm
 switch update_method
     case 'DIRECT'
-        [ t, x ] = SSA.directMethod(stoich_matrix, propensity_fcn, tspan, x0,...
-                                    rate_params, output_fcn, max_num_events);
+        [ t, x ] = directMethod(stoich_matrix, propensity_fcn, tspan, x0,...
+                                rate_params, output_fcn, max_num_events);
     case 'FIRST-REACTION'
-        [ t, x ] = SSA.firstReactionMethod(stoich_matrix, propensity_fcn, tspan, x0,...
-                                           rate_params, output_fcn, max_num_events);
+        [ t, x ] = firstReactionMethod(stoich_matrix, propensity_fcn, tspan, x0,...
+                                       rate_params, output_fcn, max_num_events);
 end
 
 % Output
@@ -242,3 +243,4 @@ else
 end
 
 end
+

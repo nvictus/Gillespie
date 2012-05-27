@@ -5,9 +5,9 @@ function [ t, x ] = directMethod( stoich_matrix, propensity_fcn, tspan, x0,...
 %   Chemical Reactions. J Phys Chem, 81:25, 2340-2361.
 %
 %   Usage:
-%       [t, x] = SSA.directMethod( stoich_matrix, propensity_fcn, tspan, x0 )
-%       [t, x] = SSA.directMethod( stoich_matrix, propensity_fcn, tspan, x0, rate_params )
-%       [t, x] = SSA.directMethod( stoich_matrix, propensity_fcn, tspan, x0, rate_params, output_fcn )
+%       [t, x] = directMethod( stoich_matrix, propensity_fcn, tspan, x0 )
+%       [t, x] = directMethod( stoich_matrix, propensity_fcn, tspan, x0, rate_params )
+%       [t, x] = directMethod( stoich_matrix, propensity_fcn, tspan, x0, rate_params, output_fcn )
 %
 %   Returns:
 %       t:              time vector          (Nreaction_events x 1)
@@ -40,7 +40,7 @@ function [ t, x ] = directMethod( stoich_matrix, propensity_fcn, tspan, x0,...
 %   Copyright:  (c) Nezar Abdennur 2012
 %   Revision:   12.01.19
 %
-%   See also SSA.FIRSTREACTIONMETHOD
+%   See also FIRSTREACTIONMETHOD
 
 if ~exist('MAX_OUTPUT_LENGTH','var')
     MAX_OUTPUT_LENGTH = 1000000;
@@ -59,12 +59,12 @@ T = zeros(MAX_OUTPUT_LENGTH, 1);
 X = zeros(MAX_OUTPUT_LENGTH, num_species);
 T(1)     = tspan(1);
 X(1,:)   = x0;
-rxnCount = 1;
+rxn_count = 1;
 
 %% MAIN LOOP
-while T(rxnCount) <= tspan(2)        
+while T(rxn_count) < tspan(2)        
     % Calculate reaction propensities
-    a  = propensity_fcn(X(rxnCount,:), rate_params);
+    a  = propensity_fcn(X(rxn_count,:), rate_params);
     
     % Compute tau and mu using random variates
     a0 = sum(a);
@@ -79,24 +79,24 @@ while T(rxnCount) <= tspan(2)
     %end
 
     % Update time and carry out reaction mu
-    rxnCount = rxnCount + 1; 
-    T(rxnCount)   = T(rxnCount-1)   + tau;
-    X(rxnCount,:) = X(rxnCount-1,:) + stoich_matrix(mu,:);                
+    rxn_count = rxn_count + 1; 
+    T(rxn_count)   = T(rxn_count-1)   + tau;
+    X(rxn_count,:) = X(rxn_count-1,:) + stoich_matrix(mu,:);                
     
     if ~isempty(output_fcn)
-        stop_signal = feval(output_fcn, T(rxnCount), X(rxnCount,:)');
+        stop_signal = feval(output_fcn, T(rxn_count), X(rxn_count,:)');
         if stop_signal
-            t = T(1:rxnCount-1);
-            x = X(1:rxnCount-1,:);
+            t = T(1:rxn_count-1);
+            x = X(1:rxn_count-1,:);
             warning('SSA:TerminalEvent',...
                     'Simulation was terminated by OutputFcn.');
             return;
         end 
     end
     
-    if rxnCount > MAX_OUTPUT_LENGTH
-        t = T(1:rxnCount-1);
-        x = X(1:rxnCount-1,:);
+    if rxn_count > MAX_OUTPUT_LENGTH
+        t = T(1:rxn_count-1);
+        x = X(1:rxn_count-1,:);
         warning('SSA:ExceededCapacity',...
                 'Number of reaction events exceeded the number pre-allocated. Simulation terminated prematurely.');
         return;
@@ -104,10 +104,11 @@ while T(rxnCount) <= tspan(2)
 end  
 
 % Record output
-t = T(1:rxnCount-1);
-x = X(1:rxnCount-1,:);
+t = T(1:rxn_count);
+x = X(1:rxn_count,:);
 if t(end) < tspan(2)
     t(end) = tspan(2);
+    x(end,:) = X(rxn_count-1,:);
 end    
 
 end
