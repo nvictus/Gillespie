@@ -1,9 +1,9 @@
-% SSA
+% gillespie
 %
-% Author:     Nezar Abdennur
+% Author:     Nezar Abdennur <nabdennur@gmail.com>
 % Created:    2012-01-07
 % Copyright:  (c) Nezar Abdennur 2012
-% Version:    1.0.0
+% Release:    2.0.0
 %
 % Files
 %   ssa        - Runs a chemical kinetics simulation using the Gillespie Stochastic Simulation Algorithm

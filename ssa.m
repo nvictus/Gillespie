@@ -62,15 +62,14 @@ function varargout = ssa( stoich_matrix, propensity_fcn, tspan, x0, rate_params,
 %       Validate:       Whether to validate required input arguments.
 %                       (Default=true)
 %
-%   See also SSA.directMethod, SSA.firstReactionMethod, SSAPLOT, SSAEVENT
+%   See also DIRECTMETHOD, FIRSTREACTIONMETHOD, SSAPLOT, SSAEVENT
 %
-%   Author:     Nezar Abdennur
-%   Copyright:  (c) Nezar Abdennur 2012
-%   Revision:   12.01.19
+%   Author:  Nezar Abdennur, 2012 <nabdennur@gmail.com>
+%   Created: 2012-01-07
 
 % If no input, show usage
 if nargin == 0
-    help(mfilename);
+    help(mfilename('fullpath'));
     return;
 end
 
