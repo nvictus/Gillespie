@@ -29,8 +29,8 @@ num_species = size(stoich_matrix,2);
 
 T = zeros(MAX_OUTPUT_LENGTH, 1);
 X = zeros(MAX_OUTPUT_LENGTH, num_species);
-T(1:2)   = repmat(tspan(1), 2,1);
-X(1:2,:) = repmat(x0, 2,1);
+T(1)   = tspan(1); %repmat(tspan(1), 2,1);
+X(1,:) = x0; %repmat(x0, 2,1);
 rxn_count = 2;
 
 ti = timeseries.times;
@@ -39,21 +39,22 @@ if ti(1) > tspan(1) || ti(end) < tspan(2)
     error('The input time series [%g,...,%g] must contain the simulation time span [%g, %g] as a subinterval.', ti(1), ti(end),tspan(1), tspan(2));
 end
 start = 1;
-Tbarrier = T(1) + delta;
+time = T(1);
+Tbarrier = time + delta;
 [k1, start] = lookup(k,ti, T(1), start);
 [k2, start] = lookup(k,ti, Tbarrier, start);
 
 %% MAIN LOOP
-while T(rxn_count) <= tspan(2)        
+while time <= tspan(2)        
     % Calculate propensities with constant rate parameters
     Aconst = pfcn_const( X(rxn_count,:), rate_params );
     r1 = rand(num_const,1);
     tau_const = -log(r1)./Aconst;
    
     % Estimate propensities with varying rate parameters
-    Avar1  = pfcn_var( T(rxn_count), X(rxn_count,:), rate_params, k1 );
-    Avar2  = pfcn_var( Tbarrier,     X(rxn_count,:), rate_params, k2 );
-    Aprime = (Avar2-Avar1)/(Tbarrier-T(rxn_count));
+    Avar1  = pfcn_var( time,     X(rxn_count,:), rate_params, k1 );
+    Avar2  = pfcn_var( Tbarrier, X(rxn_count,:), rate_params, k2 );
+    Aprime = (Avar2-Avar1)/(Tbarrier-time);
     r2 = rand(num_var,1);
     tau_var = (Avar1./Aprime) .* ( sqrt( 1-(2*Aprime./Avar1.^2).*log(r2) ) - 1 );
  
@@ -67,7 +68,7 @@ while T(rxn_count) <= tspan(2)
     [tau, mu] = min([tau_const;tau_var]);
     
     % Update
-    if ( T(rxn_count) + tau <= Tbarrier )
+    if ( time + tau <= Tbarrier )
 
         if rxn_count + 1 > MAX_OUTPUT_LENGTH
             t = T(1:rxn_count);
@@ -77,16 +78,19 @@ while T(rxn_count) <= tspan(2)
             return;
         end
         
-        % jump to firing time and fire reaction
-        T(rxn_count+1) = T(rxn_count) + tau;
+        % jump to firing time and fire reaction.
+        time = time + tau;
+        T(rxn_count+1) = time;
         X(rxn_count+1,:) = X(rxn_count,:) + stoich_matrix(mu,:);
         rxn_count = rxn_count + 1; 
-        [k1, start] = lookup(k,ti, T(rxn_count), start);
+        [k1, start] = lookup(k,ti, time, start);
     else
-        % jump to barrier time and stay quiescent
-        T(rxn_count) = Tbarrier;
+        % jump to barrier time and stay quiescent. No need to log anything.
+        time = Tbarrier;
+%         T(rxn_count+1) = t;
+%         X(rxn_count_1,:) = X(rxn_count,:);
         Tbarrier = Tbarrier + delta;
-        [k1, start] = lookup(k,ti, T(rxn_count), start);
+        [k1, start] = lookup(k,ti, time, start);
         [k2, start] = lookup(k,ti, Tbarrier, start);
     end               
                 
@@ -110,23 +114,27 @@ x = X(1:rxn_count,:);
 if t(end) > tspan(2)
     t(end) = tspan(2);
     x(end,:) = X(rxn_count-1,:);
-end    
+elseif t(end) < time
+    t(end+1) = tspan(2);
+    x(end+1,:) = X(rxn_count,:);
+end
+    
 
 end
 
 
-function [ki, start_index] = lookup(k, t, t_interp, start_index)
+function [ki, start] = lookup(k, t, t_interp, start)
 % LOOKUP Estimate function value K(t) at t=t_interp by linear interpolation
-%   from the time series (t, k). Search starts at start_index.
+%   from the time series (t, k). Search starts at index start.
 %
 %   NOTE: Assumes there are no repeated time values in ti.
 
     try
-        while t(start_index+1) < t_interp
-            start_index = start_index + 1;
+        while t(start+1) < t_interp
+            start = start + 1;
         end
-        tprev = t(start_index); kprev = k(start_index,:);
-        tnext = t(start_index+1); knext = k(start_index+1,:);
+        tprev = t(start); kprev = k(start,:);
+        tnext = t(start+1); knext = k(start+1,:);
         ki = kprev + ( (knext-kprev)/(tnext-tprev) ) * (t_interp-tprev); 
     catch %#ok
         ki = k(end,:);
