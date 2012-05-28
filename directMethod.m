@@ -36,9 +36,10 @@ function [ t, x ] = directMethod( stoich_matrix, propensity_fcn, tspan, x0,...
 %						It can be used to locate events or monitor progress. 
 %						If it returns 0, the simulation terminates.
 %
-%   Author:     Nezar Abdennur
-%   Copyright:  (c) Nezar Abdennur 2012
-%   Revision:   12.01.19
+%   Author:  Nezar Abdennur, 2012 <nabdennur@gmail.com>
+%   Created: 2012-01-19
+%   Dynamical Systems Biology Laboratory, University of Ottawa
+%   www.sysbiolab.uottawa.ca
 %
 %   See also FIRSTREACTIONMETHOD
 
@@ -79,34 +80,34 @@ while T(rxn_count) < tspan(2)
     %end
 
     % Update time and carry out reaction mu
-    rxn_count = rxn_count + 1; 
-    T(rxn_count)   = T(rxn_count-1)   + tau;
-    X(rxn_count,:) = X(rxn_count-1,:) + stoich_matrix(mu,:);                
+    if rxn_count + 1 > MAX_OUTPUT_LENGTH
+        t = T(1:rxn_count);
+        x = X(1:rxn_count,:);
+        warning('SSA:ExceededCapacity',...
+                'Number of reaction events exceeded the number pre-allocated. Simulation terminated prematurely.');
+        return;
+    end
+    
+    T(rxn_count+1)   = T(rxn_count)   + tau;
+    X(rxn_count+1,:) = X(rxn_count,:) + stoich_matrix(mu,:);    
+    rxn_count = rxn_count + 1;
     
     if ~isempty(output_fcn)
         stop_signal = feval(output_fcn, T(rxn_count), X(rxn_count,:)');
         if stop_signal
-            t = T(1:rxn_count-1);
-            x = X(1:rxn_count-1,:);
+            t = T(1:rxn_count);
+            x = X(1:rxn_count,:);
             warning('SSA:TerminalEvent',...
                     'Simulation was terminated by OutputFcn.');
             return;
         end 
-    end
-    
-    if rxn_count > MAX_OUTPUT_LENGTH
-        t = T(1:rxn_count-1);
-        x = X(1:rxn_count-1,:);
-        warning('SSA:ExceededCapacity',...
-                'Number of reaction events exceeded the number pre-allocated. Simulation terminated prematurely.');
-        return;
     end
 end  
 
 % Record output
 t = T(1:rxn_count);
 x = X(1:rxn_count,:);
-if t(end) < tspan(2)
+if t(end) > tspan(2)
     t(end) = tspan(2);
     x(end,:) = X(rxn_count-1,:);
 end    

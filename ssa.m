@@ -80,7 +80,7 @@ if nargin < 4
           'Not enough input arguments. Type help(''ssa'').');
 end
 
-if nargin == 4
+if ~exist('rate_params','var')
     rate_params = []; %no rate parameters provided
 end
 
