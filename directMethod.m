@@ -1,9 +1,6 @@
 function [ t, x ] = directMethod( stoich_matrix, propensity_fcn, tspan, x0,...
                                   rate_params, output_fcn, MAX_OUTPUT_LENGTH)
 %DIRECTMETHOD Implementation of the Direct Method variant of the Gillespie algorithm
-%   Based on: Gillespie, D.T. (1977) Exact Stochastic Simulation of Coupled
-%   Chemical Reactions. J Phys Chem, 81:25, 2340-2361.
-%
 %   Usage:
 %       [t, x] = directMethod( stoich_matrix, propensity_fcn, tspan, x0 )
 %       [t, x] = directMethod( stoich_matrix, propensity_fcn, tspan, x0, rate_params )
@@ -31,17 +28,22 @@ function [ t, x ] = directMethod( stoich_matrix, propensity_fcn, tspan, x0,...
 %	Optional:
 %		output_fcn:	    Handle to user-defined function with the form
 %							status = f( tc, xc )
-%						The output_fcn is called at each time step in the 
-%						simulation and is passed the current time and state.
-%						It can be used to locate events or monitor progress. 
-%						If it returns 0, the simulation terminates.
+%						The output_fcn is called at each time step in the
+%						simulation and is passed the current time and
+%						state. It can be used to locate events or monitor
+%						progress. If it returns 1, the simulation
+%						terminates.
 %
-%   Author:  Nezar Abdennur, 2012 <nabdennur@gmail.com>
-%   Created: 2012-01-19
-%   Dynamical Systems Biology Laboratory, University of Ottawa
-%   www.sysbiolab.uottawa.ca
+%   Reference: 
+%       Gillespie, D.T. (1977) Exact Stochastic Simulation of Coupled
+%       Chemical Reactions. J Phys Chem, 81:25, 2340-2361.
 %
 %   See also FIRSTREACTIONMETHOD
+
+%   Nezar Abdennur, 2012 <nabdennur@gmail.com>
+%   Dynamical Systems Biology Laboratory, University of Ottawa
+%   www.sysbiolab.uottawa.ca
+%   Created: 2012-01-19
 
 if ~exist('MAX_OUTPUT_LENGTH','var')
     MAX_OUTPUT_LENGTH = 1000000;
