@@ -2,17 +2,51 @@ function [ t, x ] = trapezoidalMethod( stoich_const, pfcn_const, stoich_var, pfc
                                        tspan, x0, rate_params, timeseries, delta,...
                                        output_fcn, MAX_OUTPUT_LENGTH)
 %TRAPEZOIDALMETHOD Modified Gillespie algorithm to allow time-varying rate parameters
-%   Based on: V. Shahrezaei, J.F. Ollivier, P.S. Swain (2008) Colored
-%   extrinsic fluctuations and stochastic gene expression. Mol Sys Biol, 4,
-%   196.
+%   Estimates reaction times using the trapezoidal area obtained by a
+%   linearization of the time-dependent propensity a(t) over sufficiently
+%   short intervals of time. Requires a pre-recorded history of the
+%   time-varying rate parameter provided as a time series.
 %
 %   Usage:
-%       [t, x] = 
+%       [t, x] = trapezoidalMethod( stoich_const, pfcn_const, stoich_var, pfcn_var, ...
+%                                   tspan, x0, rate_params, timeseries, delta )
 %
-%   Author:     Nezar Abdennur
-%   Copyright:  (c) Nezar Abdennur 2012
+%   Returns:
+%       t:              time vector          (Nreaction_events x 1)
+%       x:              species amounts      (Nreaction_events x Nspecies)  
 %
-%   See also 
+%   Required:
+%       stoich_const:   Matrix of stoichiometries (Nreactions x Nspecies)
+%                       for reactions with FIXED rate constants.
+%       pfcn_const:     Function to calculate reaction propensities for 
+%                       reactions with FIXED rate parameters. Should be of 
+%                       the form: a = f( x, p ), where x is the current 
+%                       state and p contains the fixed parameters.
+%       stoich_var:     Matrix of stoichiometries (Nreactions x Nspecies)
+%                       for reactions with VARYING rate parameters.
+%       pfcn_var:       Function to calculate reaction propensities for 
+%                       reactions with VARYING rate parameters. Should be
+%                       of the form: a = f( x, p, k ), where k is the time-
+%                       varying parameter.
+%       tspan:          Initial and final times, [t_initial, t_final].
+%       x0:             Initial species values, [S1_0, S2_0, ... ].
+%       rate_params:    Structure containing the fixed rate parameters.
+%       timeseries:     Structure containing a time history of the varying
+%                       rate parameters. It should have fields "time" and
+%                       "values".
+%       delta:          Size of time interval between barriers for the 
+%                       accuracy of trapezoidal estimates of reaction times
+%
+%   Reference: 
+%       V. Shahrezaei, J.F. Ollivier, P.S. Swain (2008) Colored extrinsic 
+%       fluctuations and stochastic gene expression. Mol Sys Biol, 4, 196.
+%
+%   See also DIRECTMETHOD, FIRSTREACTIONMETHOD
+
+%   Nezar Abdennur, 2012 <nabdennur@gmail.com>
+%   Dynamical Systems Biology Laboratory, University of Ottawa
+%   www.sysbiolab.uottawa.ca
+
 
 if ~exist('MAX_OUTPUT_LENGTH','var')
     MAX_OUTPUT_LENGTH = 1000000;
@@ -29,18 +63,21 @@ num_species = size(stoich_matrix,2);
 
 T = zeros(MAX_OUTPUT_LENGTH, 1);
 X = zeros(MAX_OUTPUT_LENGTH, num_species);
-T(1)   = tspan(1); %repmat(tspan(1), 2,1);
-X(1,:) = x0; %repmat(x0, 2,1);
-rxn_count = 2;
+T(1)   = tspan(1); 
+X(1,:) = x0; 
+rxn_count = 1;
 
+% History of time-varying parameter(s) (TVP)
 ti = timeseries.times;
 k = timeseries.values;
 if ti(1) > tspan(1) || ti(end) < tspan(2)
     error('The input time series [%g,...,%g] must contain the simulation time span [%g, %g] as a subinterval.', ti(1), ti(end),tspan(1), tspan(2));
 end
-start = 1;
 time = T(1);
 Tbarrier = time + delta;
+
+% Interpolate TVP values from time series.
+start = 1;
 [k1, start] = lookup(k,ti, T(1), start);
 [k2, start] = lookup(k,ti, Tbarrier, start);
 
@@ -83,13 +120,14 @@ while time <= tspan(2)
         T(rxn_count+1) = time;
         X(rxn_count+1,:) = X(rxn_count,:) + stoich_matrix(mu,:);
         rxn_count = rxn_count + 1; 
+        % interpolate TVP value at current time
         [k1, start] = lookup(k,ti, time, start);
     else
         % jump to barrier time and stay quiescent. No need to log anything.
         time = Tbarrier;
-%         T(rxn_count+1) = t;
-%         X(rxn_count_1,:) = X(rxn_count,:);
+        % advance barrier
         Tbarrier = Tbarrier + delta;
+        % interpolate new TVP values at current time and at new barrier
         [k1, start] = lookup(k,ti, time, start);
         [k2, start] = lookup(k,ti, Tbarrier, start);
     end               
@@ -114,7 +152,7 @@ x = X(1:rxn_count,:);
 if t(end) > tspan(2)
     t(end) = tspan(2);
     x(end,:) = X(rxn_count-1,:);
-elseif t(end) < time
+elseif t(end) < tspan(2)
     t(end+1) = tspan(2);
     x(end+1,:) = X(rxn_count,:);
 end
@@ -127,7 +165,7 @@ function [ki, start] = lookup(k, t, t_interp, start)
 % LOOKUP Estimate function value K(t) at t=t_interp by linear interpolation
 %   from the time series (t, k). Search starts at index start.
 %
-%   NOTE: Assumes there are no repeated time values in ti.
+%   NOTE: Assumes there are no repeated time values in t.
 
     try
         while t(start+1) < t_interp
