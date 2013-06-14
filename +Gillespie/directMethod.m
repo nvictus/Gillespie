@@ -27,17 +27,17 @@ function [ t, x ] = directMethod( stoich_matrix, propensity_fcn, tspan, x0,...
 %                       propensities (Nreactions x 1) in the same order as
 %                       the reactions given in stoich_matrix.
 %
-%	Optional:
+%   Optional:
 %       params:         User-defined parameters, passed to prop_fun (e.g.,
 %                       a struct of rate constants) <default=[]>
 %
-%		output_fcn:	    Arbitrary function with signature
-%							status = f( tc, xc )
-%						The output_fcn is passed the current time and state
-%						after each step of the simulation. It can be used
-%						to locate events, monitor progress, write data,
-%						etc. If it returns 1, the simulation terminates.
-%						<default=none>
+%       output_fcn:     Arbitrary function with signature
+%                           status = f( tc, xc )
+%                       The output_fcn is passed the current time and state
+%                       after each step of the simulation. It can be used
+%                       to locate events, monitor progress, write data,
+%                       etc. If it returns 1, the simulation terminates.
+%                       <default=none>
 %
 %   Reference: 
 %       Gillespie, D.T. (1977) Exact Stochastic Simulation of Coupled
@@ -77,7 +77,7 @@ while T(rxn_count) < tspan(2)
     % Sample earliest time-to-fire (tau)
     a0 = sum(a);
     r = rand(1,2);
-    tau = (1/a0)*log(1/r(1));
+    tau = -log(r(1))/a0; %(1/a0)*log(1/r(1));
     
     % Sample identity of earliest reaction channel to fire (mu)
     [~, mu] = histc(r(2)*a0, [0;cumsum(a(:))]); 
