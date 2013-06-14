@@ -46,6 +46,6 @@ protein = x(2);
 
 a = [p.kR;            %transcription
      p.kP*mRNA;       %translation
-	 p.gR*mRNA;       %mRNA decay
+     p.gR*mRNA;       %mRNA decay
      p.gP*protein];   %protein decay
 end
