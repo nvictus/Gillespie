@@ -7,6 +7,8 @@ The two classic versions of the algorithm implemented in MATLAB:
 - The _direct_ method
 - The _first-reaction_ method
 
+[Available on the File Exchange](http://www.mathworks.com/matlabcentral/fileexchange/34707-gillespie-stochastic-simulation-algorithm)
+
 Example model
 -------------
 ```
@@ -20,5 +22,7 @@ Reaction network:
 >> ssa_example
 ```
 ![Simulation output](ssa.png)
+
+
 
 
