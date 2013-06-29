@@ -11,6 +11,8 @@ The two classic versions of the algorithm implemented in MATLAB:
 
 Example model
 -------------
+![Simulation output](ssa.png)
+
 Consider the following two-state model of the expression of a single gene.
 ```
 Reaction network:
@@ -19,8 +21,6 @@ Reaction network:
     3. mRNA decay:          mRNA    --gR--> 0
     4. protein decay:       protein --gP--> 0
 ```
-
-![Simulation output](ssa.png)
 
 1\. Provide the time interval and the initial state of the system. 
 
@@ -63,7 +63,7 @@ a = [p.kR;          %transcription
 end
 ```
 
-5\. Optionally, provide a set of rate constants to pass to the propensity function. Here, we define the rate constants as a struct:
+4\. Optionally, provide a set of rate constants to pass to the propensity function. Here, we define the rate constants as a struct:
 
 ```matlab
 p.kR = 0.1;    %molecules/sec
@@ -72,7 +72,7 @@ p.gR = 0.1;    %sec^-1
 p.gP = 0.002;  %sec^-1
 ```
 
-6\. Run the solver!
+5\. Run the solver!
 
 ```matlab
 [t,x] = directMethod(stoich_matrix, pfun, tspan, x0, p);
