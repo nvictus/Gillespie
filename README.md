@@ -56,9 +56,9 @@ function a = propensities_2state(x, p)
 mRNA    = x(1);
 protein = x(2);
 
-a = [p.kR;          %transcription
-     p.kP*mRNA;     %translation
-     p.gR*mRNA;     %mRNA decay
+a = [p.kR           %transcription
+     p.kP*mRNA      %translation
+     p.gR*mRNA      %mRNA decay
      p.gP*protein]; %protein decay
 end
 ```
